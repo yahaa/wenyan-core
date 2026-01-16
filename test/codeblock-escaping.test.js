@@ -89,15 +89,19 @@ describe("Code block escaping tests", () => {
         await getContentForGzhCustomCss(wenyanElement, customCss, highlightCss, false, false);
         
         const codeElement = wenyanElement.querySelector('pre code');
+        const textContent = codeElement.textContent;
         const innerHTML = codeElement.innerHTML;
         
         console.log('Bash code innerHTML:', innerHTML);
+        console.log('Bash code textContent:', textContent);
         
         // Should have <br> tags for newlines
         expect(innerHTML).toContain('<br>');
-        // Should have non-breaking spaces
-        expect(innerHTML).toMatch(/\u00A0/);
+        // Should have non-breaking spaces in text content (Unicode \u00A0)
+        expect(textContent).toMatch(/\u00A0/);
         // Should not have double-escaped entities
         expect(innerHTML).not.toContain('&amp;amp;');
+        // Note: innerHTML will show &nbsp; when serialized, which is correct behavior
+        // The key is that we're using Unicode \u00A0 in the DOM to avoid double-escaping issues
     });
 });
