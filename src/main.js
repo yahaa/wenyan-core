@@ -259,26 +259,30 @@ export async function getContentForGzhCustomCss(wenyanElement, customCss, highli
         // 递归处理节点，替换换行符和空格
         function processNodes(node) {
             const childNodes = Array.from(node.childNodes);
+            const document = node.ownerDocument;
+            const TEXT_NODE = 3; // Node.TEXT_NODE
+            const ELEMENT_NODE = 1; // Node.ELEMENT_NODE
+            
             childNodes.forEach(child => {
-                if (child.nodeType === 3) { // 文本节点 (Node.TEXT_NODE)
+                if (child.nodeType === TEXT_NODE) { // 文本节点
                     const text = child.textContent;
                     if (text.includes('\n') || text.includes(' ')) {
-                        const fragment = node.ownerDocument.createDocumentFragment();
+                        const fragment = document.createDocumentFragment();
                         const parts = text.split('\n');
                         parts.forEach((part, index) => {
                             if (index > 0) {
-                                fragment.appendChild(node.ownerDocument.createElement('br'));
+                                fragment.appendChild(document.createElement('br'));
                             }
                             if (part) {
                                 // 使用 textContent 设置文本，避免 HTML 实体问题
                                 // 将空格替换为不间断空格 (Unicode \u00A0)
-                                const textNode = node.ownerDocument.createTextNode(part.replace(/ /g, '\u00A0'));
+                                const textNode = document.createTextNode(part.replace(/ /g, '\u00A0'));
                                 fragment.appendChild(textNode);
                             }
                         });
                         node.replaceChild(fragment, child);
                     }
-                } else if (child.nodeType === 1) { // 元素节点 (Node.ELEMENT_NODE)
+                } else if (child.nodeType === ELEMENT_NODE) { // 元素节点
                     processNodes(child);
                 }
             });
