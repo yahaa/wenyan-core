@@ -256,9 +256,38 @@ export async function getContentForGzhCustomCss(wenyanElement, customCss, highli
     // 处理代码块
     elements = wenyanElement.querySelectorAll("pre code");
     elements.forEach(element => {
-        element.innerHTML = element.innerHTML
-                .replace(/\n/g, '<br>')
-                .replace(/(>[^<]+)|(^[^<]+)/g, str => str.replace(/\s/g, '&nbsp;'));
+        // 递归处理节点，替换换行符和空格
+        function processNodes(node) {
+            const childNodes = Array.from(node.childNodes);
+            const document = node.ownerDocument;
+            const TEXT_NODE = 3; // Node.TEXT_NODE
+            const ELEMENT_NODE = 1; // Node.ELEMENT_NODE
+            
+            childNodes.forEach(child => {
+                if (child.nodeType === TEXT_NODE) { // 文本节点
+                    const text = child.textContent;
+                    if (text.includes('\n') || text.includes(' ')) {
+                        const fragment = document.createDocumentFragment();
+                        const parts = text.split('\n');
+                        parts.forEach((part, index) => {
+                            if (index > 0) {
+                                fragment.appendChild(document.createElement('br'));
+                            }
+                            if (part) {
+                                // 使用 textContent 设置文本，避免 HTML 实体问题
+                                // 将空格替换为不间断空格 (Unicode \u00A0)
+                                const textNode = document.createTextNode(part.replace(/ /g, '\u00A0'));
+                                fragment.appendChild(textNode);
+                            }
+                        });
+                        node.replaceChild(fragment, child);
+                    }
+                } else if (child.nodeType === ELEMENT_NODE) { // 元素节点
+                    processNodes(child);
+                }
+            });
+        }
+        processNodes(element);
     });
     // 公众号不支持css伪元素，将伪元素样式提取出来拼接成一个span
     elements = wenyanElement.querySelectorAll('h1, h2, h3, h4, h5, h6, blockquote, pre');
